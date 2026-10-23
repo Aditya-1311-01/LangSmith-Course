@@ -7,19 +7,26 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 from langsmith import traceable
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, START, END
 
 # ---------- Setup ----------
 load_dotenv()
-model = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+model = ChatGroq(
+    model="openai/gpt-oss-20b",
+    temperature=0,
+    max_tokens=1500,
+)
 
 # ---------- Structured schema & model ----------
 class EvaluationSchema(BaseModel):
     feedback: str = Field(description="Detailed feedback for the essay")
     score: int = Field(description="Score out of 10", ge=0, le=10)
 
-structured_model = model.with_structured_output(EvaluationSchema)
+structured_model = model.with_structured_output(
+    EvaluationSchema,
+    method="json_schema",
+)
 
 # ---------- Sample essay ----------
 essay2 = """India and AI Time
@@ -120,7 +127,7 @@ if __name__ == "__main__":
             "tags": ["essay", "langgraph", "evaluation"],
             "metadata": {
                 "essay_length": len(essay2),
-                "model": "gpt-4o-mini",
+                "model": "openai/gpt-oss-20b",
                 "dimensions": ["language", "analysis", "clarity"],
             },
         },
